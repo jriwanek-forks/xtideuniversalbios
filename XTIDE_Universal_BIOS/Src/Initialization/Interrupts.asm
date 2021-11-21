@@ -202,9 +202,19 @@ Interrupts_InstallHandlerToVectorInALFromCSSI:
 ;		AX, BX, DX
 ;--------------------------------------------------------------------
 Interrupts_UnmaskInterruptControllerForDriveInDSDI:
-	eMOVZX	bx, [di+DPT.bIdevarsOffset]
+	eMOVZX	bx, [di+DPT.bIdevarsOffset]		; Clears CF on pre-386 CPUs
+%ifndef USE_386
+%ifdef USE_UNDOC_INTEL
+	salc
+	or		al, [cs:bx+IDEVARS.bIRQ]
+%else
 	mov		al, [cs:bx+IDEVARS.bIRQ]
 	test	al, al
+%endif
+%else ; USE_386
+	mov		al, [cs:bx+IDEVARS.bIRQ]
+	test	al, al
+%endif
 	jz		SHORT .Return	; Interrupts disabled
 	cmp		al, 8
 	jb		SHORT .UnmaskLowIrqController

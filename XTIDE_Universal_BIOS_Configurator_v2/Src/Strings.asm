@@ -54,8 +54,8 @@ g_szGenericDialogInfo:	db	"Press ENTER or ESC to close dialog.",NULL
 ; Flashing related strings
 g_szFlashTitle:				db	"Flashing EEPROM, please wait.",NULL
 g_szErrEepromTooSmall:		db	"Image is too large for selected EEPROM type!",NULL
-g_szErrAddrNot32KAligned:	db	"The selected EEPROM type requires the address to be 32 "
-							db	"kiB aligned (C800, D000, D800, E000, etc.)",NULL
+g_szErrAddrNot32KAligned:	db	"The selected EEPROM type requires the address to be 32"
+							db	" kiB aligned (C800, D000, D800, E000, etc.)",NULL
 g_szErrEepromDetection:		db	"EEPROM of type not found.",LF
 							db	"EEPROM was not flashed properly!",NULL
 g_szErrEepromPolling:		db	"Timeout when polling EEPROM.",LF
@@ -122,8 +122,8 @@ g_szDlgAutoConfigure:	db	"Found "
 g_bControllersDetected:	db	'x'				; Value stored directly here
 						db	" controllers.",NULL
 g_szDlgBadBiosFound:	db	"This computer has been identified as being one of the following models:",LF,LF
-						db	"Zenith Z-171",LF
-						db	"Zenith Z-161",LF,LF
+						db	"Zenith Data Systems Z-171",LF
+						db	"Zenith Data Systems Z-161",LF,LF
 						db	"The Boot settings menu option 'Remove other hard drives' has been set to YES for this reason.",NULL
 g_szDlgCfgFullMode:		db	"Enable full operating mode?",NULL
 g_szDlgCfgStealSize:	db	"How many kiB of base memory to steal for XTIDE Universal BIOS variables (1...255)?",NULL
@@ -478,10 +478,10 @@ g_szHelpSerialDetect:			db	"Set to Yes, at the end of normal drive detection, CO
 								db	" Even when this option is set to No, this functionality can still be invoked by holding down the ALT key at the end"
 								db	" of normal drive detection. Note that if any serial drives are detected during the normal drive detection,"
 								db	" no scan will take place (to avoid finding the same drive twice).",NULL
-g_szHelpClearBdaDriveCount:		db	"Set to NO for normal operation. Set to YES to get Windows 9x protected mode drivers to work when"
-								db	" MODULE_WIN9X_CMOS_HACK is not included (dummy drive needs to be defined in system BIOS setup). This option must"
-								db	" also be set to YES on computers where the system BIOS does not initialize RAM properly. Zenith models Z-171 and"
-								db	" Z-161 are known examples of such machines.",NULL
+g_szHelpClearBdaDriveCount:		db	"Set to NO for normal operation. Set to YES to get the built-in protected mode driver in Windows 9x to work when a"
+								db	" dummy drive has been added in system BIOS setup or when using a BIOS built with MODULE_WIN9X_CMOS_HACK included."
+								db	" This option must also be set to YES on computers where the system BIOS does not initialize RAM properly."
+								db	" Zenith Data Systems models Z-171 and Z-161 are known examples of such machines.",NULL
 
 g_szMultichoiceBootDispMode:	db	"Default",LF
 								db	"40x25 Black & White",LF

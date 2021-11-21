@@ -159,14 +159,12 @@ Memory_ReserveCXbytesFromStackToDSSI:
 %ifndef EXCLUDE_FROM_XTIDECFG OR NO_ATAID_VALIDATION
 ALIGN JUMP_ALIGN
 Memory_SumCXbytesFromESSItoAL:
-	push	si
-	dec		si
+	add		si, cx
 	xor		al, al
 ALIGN JUMP_ALIGN
 .AddNextByteToAL:
-	inc		si
+	dec		si
 	add		al, [es:si]
 	loop	.AddNextByteToAL
-	pop		si
 	ret
 %endif

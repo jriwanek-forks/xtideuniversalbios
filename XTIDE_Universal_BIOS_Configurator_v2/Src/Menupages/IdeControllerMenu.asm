@@ -299,42 +299,42 @@ SECTION .text
 ALIGN JUMP_ALIGN
 IdeControllerMenu_InitializeToIdevarsOffsetInBX:
 	lea		ax, [bx+IDEVARS.drvParamsMaster]
-	mov		[cs:g_MenuitemIdeControllerMasterDrive+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
+	mov		[g_MenuitemIdeControllerMasterDrive+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
 
 	lea		ax, [bx+IDEVARS.drvParamsSlave]
-	mov		[cs:g_MenuitemIdeControllerSlaveDrive+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
+	mov		[g_MenuitemIdeControllerSlaveDrive+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
 
 	lea		ax, [bx+IDEVARS.bDevice]
-	mov		[cs:g_MenuitemIdeControllerDevice+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
+	mov		[g_MenuitemIdeControllerDevice+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
 
 %ifndef CHECK_FOR_UNUSED_ENTRYPOINTS
 %if IDEVARS.wBasePort = 0
-	mov		[cs:g_MenuitemIdeControllerCommandBlockAddress+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], bx
+	mov		[g_MenuitemIdeControllerCommandBlockAddress+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], bx
 %else
 	lea		ax, [bx+IDEVARS.wBasePort]
-	mov		[cs:g_MenuitemIdeControllerCommandBlockAddress+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
+	mov		[g_MenuitemIdeControllerCommandBlockAddress+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
 %endif
 
 %if IDEVARS.bSerialPort = 0
-	mov		[cs:g_MenuitemIdeControllerSerialPort+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], bx
+	mov		[g_MenuitemIdeControllerSerialPort+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], bx
 %else
 	lea		ax, [bx+IDEVARS.bSerialPort]
-	mov		[cs:g_MenuitemIdeControllerSerialPort+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
+	mov		[g_MenuitemIdeControllerSerialPort+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
 %endif
 %endif
 
 	lea		ax, [bx+IDEVARS.bSerialBaud]
-	mov		[cs:g_MenuitemIdeControllerSerialBaud+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
+	mov		[g_MenuitemIdeControllerSerialBaud+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
 
 	lea		ax, [bx+IDEVARS.wControlBlockPort]
-	mov		[cs:g_MenuitemIdeControllerControlBlockAddress+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
+	mov		[g_MenuitemIdeControllerControlBlockAddress+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
 
 	lea		ax, [bx+IDEVARS.bSerialCOMPortChar]
-	mov		[cs:g_MenuitemIdeControllerSerialCOM+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
+	mov		[g_MenuitemIdeControllerSerialCOM+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
 
 	lea		ax, [bx+IDEVARS.bIRQ]
-	mov		[cs:g_MenuitemIdeControllerEnableInterrupt+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
-	mov		[cs:g_MenuitemIdeControllerIdeIRQ+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
+	mov		[g_MenuitemIdeControllerEnableInterrupt+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
+	mov		[g_MenuitemIdeControllerIdeIRQ+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset], ax
 
 	ret
 
@@ -511,14 +511,14 @@ ALIGN JUMP_ALIGN
 MasterDrive:
 	mov		bx, g_MenuitemMasterSlaveDisableDetection
 	call	DisableMenuitemFromCSBX
-	mov		bx, [cs:g_MenuitemIdeControllerMasterDrive+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset]
+	mov		bx, [g_MenuitemIdeControllerMasterDrive+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset]
 	jmp		SHORT DisplayMasterSlaveMenu
 
 ALIGN JUMP_ALIGN
 SlaveDrive:
 	mov		bx, g_MenuitemMasterSlaveDisableDetection
 	call	EnableMenuitemFromCSBX
-	mov		bx, [cs:g_MenuitemIdeControllerSlaveDrive+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset]
+	mov		bx, [g_MenuitemIdeControllerSlaveDrive+MENUITEM.itemValue+ITEM_VALUE.wRomvarsValueOffset]
 	; Fall to DisplayMasterSlaveMenu
 
 DisplayMasterSlaveMenu:
@@ -565,18 +565,24 @@ IdeControllerMenu_WriteDevice:
 
 	; Standard ATA controllers, including 8-bit mode
 .StandardIdeDevice:
-	; Enable IRQ for standard ATA
+	; Enable IRQ for standard ATA, but only if MODULE_IRQ is included
 
 	lea		ax, [di-ROMVARS.ideVars0+IDEVARS.wBasePort]
 	mov		bl, IDEVARS_size
 	div		bl
-	push	ax
+
+	test	BYTE [es:ROMVARS.wFlags+1], FLG_ROMVARS_MODULE_IRQ >> 8
+	jz		SHORT .DoNotEnableIrq
+
 	mov		bx, .rgbDefaultIrqForStdIde			; Enable interrupt for primary and secondary IDE
+	push	ax
 	xlat
 	mov		[es:di+IDEVARS.bIRQ-IDEVARS.wBasePort], al
 	pop		ax
-	sub		bx, BYTE .rgbDefaultIrqForStdIde - .rgbLowByteOfStdIdeInterfacePorts
-	xlat										; DS=CS so no segment override needed
+
+.DoNotEnableIrq:
+	mov		bx, .rgbLowByteOfStdIdeInterfacePorts
+	xlat
 	mov		ah, 1								; DEVICE_ATA_*_PORT >> 8
 	mov		bh, 3								; DEVICE_ATA_*_PORTCTRL >> 8
 	mov		bl, al

@@ -136,7 +136,7 @@ ALIGN JUMP_ALIGN
 
 ;--------------------------------------------------------------------
 ; Iteration routines for FindDPT_MasterOrSingleForIdevarsOffsetInDL and
-; FindDPT_SlaveForIdevarsOffsetInDL, for use with IterateAllDPTs
+; FindDPT_SlaveForIdevarsOffsetInDL, for use with FindDPT_IterateAllDPTs
 ;
 ; Returns when DPT is found on the controller with Idevars offset in DL
 ;
@@ -151,17 +151,16 @@ ALIGN JUMP_ALIGN
 ;--------------------------------------------------------------------
 IterateFindSecondDPTforIdevars:
 	call	IterateFindFirstDPTforIdevars
-	jc		SHORT .WrongController
+	jc		SHORT WrongController
 	mov		si, IterateFindFirstDPTforIdevars
-.WrongController:
+SetCFandReturn:
 	stc
+WrongController:
 	ret
 
 IterateFindFirstDPTforIdevars:
 	cmp		dl, [di+DPT.bIdevarsOffset]			; Clears CF if matched
-	je		.Done
-	stc											; Set CF for not found
-.Done:
+	jne		SHORT SetCFandReturn
 	ret
 
 
@@ -220,7 +219,7 @@ IterateToDptWithFlagsHighInBL:
 ;		CF:		Cleared if wanted DPT found
 ;				Set if DPT not found, or no DPTs present
 ;	Corrupts registers:
-;		SI
+;		BL, SI
 ;--------------------------------------------------------------------
 %ifdef MODULE_SERIAL
 ALIGN JUMP_ALIGN
@@ -314,7 +313,6 @@ ALIGN JUMP_ALIGN
 	add		di, BYTE LARGEST_DPT_SIZE	; Point to next DPT
 	loop	.LoopWhileDPTsLeft
 
-ALIGN JUMP_ALIGN
 .NotFound:
 	stc
 

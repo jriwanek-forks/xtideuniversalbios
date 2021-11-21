@@ -184,6 +184,8 @@ g_rgszValueToStringLookupForColorTheme:
 	dw	g_szValueColorTheme5
 
 ColorThemeTable:
+; Note! If there's ever a need to remove a theme or change a theme or reorder the themes then the ROMVARS version must be incremented.
+; This is for backwards compatibility. Adding new themes (at the bottom) however should work with no change to the ROMVARS version.
 	; Classic (default)
 	db	COLOR_ATTRIBUTE(COLOR_YELLOW, COLOR_BLUE)							; .cBordersAndBackground
 	db	COLOR_ATTRIBUTE(COLOR_GRAY, COLOR_BLACK)							; .cShadow

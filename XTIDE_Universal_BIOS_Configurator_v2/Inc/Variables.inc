@@ -21,15 +21,15 @@
 %define VARIABLES_INC
 
 ; Equates and defines
-BOOT_MENU_DEFAULT_TIMEOUT				EQU		(TICKS_PER_MINUTE / 2)
-MAX_ALLOWED_IDE_CONTROLLERS				EQU		4		; Maximum number of IDE controllers
-MAX_LITE_MODE_CONTROLLERS				EQU		2
-EEPROM_POLLING_TIMEOUT_TICKS			EQU		3		; 1 tick = 54.9 ms
-XTIDE_SIGNATURE_LENGTH					EQU		6		; XTIDE Universal BIOS signature string length (must be even)
-NUMBER_OF_EEPROM_TYPES					EQU		5
-MAX_EEPROM_SIZE_IN_BYTES				EQU		65536
-SST_PAGE_SIZE_SHIFT						EQU		12		; Minimum we can erase is a 4K sector.
-SST_PAGE_SIZE							EQU		(1 << SST_PAGE_SIZE_SHIFT)	
+BOOT_MENU_DEFAULT_TIMEOUT			EQU		(TICKS_PER_MINUTE / 2)
+MAX_ALLOWED_IDE_CONTROLLERS			EQU		4		; Maximum number of IDE controllers
+MAX_LITE_MODE_CONTROLLERS			EQU		2
+EEPROM_POLLING_TIMEOUT_TICKS		EQU		3		; 1 tick = 54.9 ms
+XTIDE_SIGNATURE_LENGTH				EQU		6		; XTIDE Universal BIOS signature string length (must be even)
+NUMBER_OF_EEPROM_TYPES				EQU		5
+MAX_EEPROM_SIZE_IN_BYTES			EQU		65536
+SST_PAGE_SIZE_SHIFT					EQU		12		; Minimum we can erase is a 4K sector.
+SST_PAGE_SIZE						EQU		(1 << SST_PAGE_SIZE_SHIFT)
 
 ; Program global variables
 struc CFGVARS
@@ -97,7 +97,7 @@ struc FLASHVARS
 	.bEepromType				resb	1
 
 	.wProgressUpdateParam		resb	2
-	.wTimeoutCounter			resb	2	; On SSI, this is timeout cal
+	.wTimeoutCounter			resb	2
 	.wLastOffsetWritten			resb	2
 	.bLastByteWritten			resb	1
 	.flashResult				resb	1

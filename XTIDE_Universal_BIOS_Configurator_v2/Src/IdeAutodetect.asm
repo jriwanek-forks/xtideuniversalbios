@@ -140,7 +140,7 @@ DetectPortMappedDeviceFromPortDX:
 	call	DetectIdeDeviceFromPortsDXandSIwithOffsetsInBLandBH
 	jc		SHORT .ContinueDetection
 	mov		al, DEVICE_8BIT_XTCF_PIO8_WITH_BIU_OFFLOAD
-	cmp		BYTE [cs:IsOlivettiM24], 1
+	cmp		BYTE [cs:bIsOlivettiM24], 1
 	jne		SHORT .IdeDeviceFound
 	mov		al, DEVICE_8BIT_XTCF_PIO8
 	ret		; With CF cleared
@@ -171,7 +171,7 @@ DetectPortMappedDeviceFromPortDX:
 	pop		dx
 	cmp		al, DEVICE_8BIT_XTIDE_REV2
 	jne		SHORT .XtideRev1
-	cmp		BYTE [cs:IsOlivettiM24], 1
+	cmp		BYTE [cs:bIsOlivettiM24], 1
 	jne		SHORT .IdeDeviceFound
 	mov		al, DEVICE_8BIT_XTIDE_REV2_OLIVETTI
 	ret		; With CF cleared

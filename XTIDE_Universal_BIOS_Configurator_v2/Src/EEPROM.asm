@@ -98,8 +98,8 @@ EEPROM_GetXtideUniversalBiosSizeFromESDItoDXCX:
 ;--------------------------------------------------------------------
 ALIGN JUMP_ALIGN
 EEPROM_LoadOldSettingsFromRomToRamBuffer:
-	mov		cx, ROMVARS_size - ROMVARS.wFlags	; Number of bytes to load
-	mov		si, ROMVARS.wFlags					; Offset where to start loading
+	mov		cx, ROMVARS_size - ROMVARS.wFlags - 2	; Number of bytes to load
+	mov		si, ROMVARS.wFlags + 2					; Offset where to start loading
 	; Fall to LoadBytesFromRomToRamBuffer
 
 ;--------------------------------------------------------------------
@@ -122,15 +122,15 @@ LoadBytesFromRomToRamBuffer:
 	call	EEPROM_FindXtideUniversalBiosROMtoESDI
 	jc		SHORT .XtideUniversalBiosNotFound
 	push	es
-	pop		ds											; DS:SI points to ROM
+	pop		ds										; DS:SI points to ROM
 
 	call	Buffers_GetFileBufferToESDI
-	mov		di, si										; ES:DI points to RAM buffer
+	mov		di, si									; ES:DI points to RAM buffer
 
 %ifdef CLD_NEEDED
 	cld
 %endif
-	call	Memory_CopyCXbytesFromDSSItoESDI			; Clears CF
+	call	Memory_CopyCXbytesFromDSSItoESDI		; Clears CF
 
 .XtideUniversalBiosNotFound:
 	pop		di
@@ -162,8 +162,9 @@ ALIGN JUMP_ALIGN
 	mov		es, bx					; Possible ROM segment to ES
 	call	Buffers_IsXtideUniversalBiosSignatureInESDI
 	je		SHORT .RomFound			; If equal, CF=0
-	add		bx, 80h					; Increment by 2kB (minimum possible distance from the beginning of one option ROM to the next)
-	jnc		SHORT .SegmentLoop		; Loop until segment overflows
+	sub		bx, -80h				; Increment by 2kB (minimum possible distance from the beginning of one option ROM to the next)
+	jc		SHORT .SegmentLoop		; Loop until segment overflows
+	stc
 .RomFound:
 	pop		cx
 	pop		si
@@ -184,14 +185,14 @@ EEPROM_LoadFromRomToRamComparisonBuffer:
 	push	es
 	push	ds
 
-	mov		ds, [cs:g_cfgVars+CFGVARS.wEepromSegment]
+	eMOVZX	bx, [g_cfgVars+CFGVARS.bEepromType]
+	mov		cx, [bx+g_rgwEepromTypeToSizeInWords]
+	mov		ds, [g_cfgVars+CFGVARS.wEepromSegment]
 	xor		si, si
 	call	Buffers_GetFlashComparisonBufferToESDI
-	eMOVZX	bx, [cs:g_cfgVars+CFGVARS.bEepromType]
 %ifdef CLD_NEEDED
 	cld
 %endif
-	mov		cx, [cs:bx+g_rgwEepromTypeToSizeInWords]
 	rep movsw
 
 	pop		ds

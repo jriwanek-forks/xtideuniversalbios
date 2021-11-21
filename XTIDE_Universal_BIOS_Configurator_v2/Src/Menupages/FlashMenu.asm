@@ -204,41 +204,27 @@ FlashMenu_EnterMenuOrModifyItemVisibility:
 .AlreadySet:
 	mov		si, g_MenupageForFlashMenu
 	ePUSH_T	bx, Menupage_ChangeToNewMenupageInDSSI
-	cmp		WORD [g_cfgVars+CFGVARS.bEepromType], EEPROM_TYPE.SST_39SF
-	jz		SHORT .DisableMenuitemsUnusedBySstFlash
-	; Fall to .EnableMenuitemsUnusedBySstFlash
+	cmp		BYTE [g_cfgVars+CFGVARS.bEepromType], EEPROM_TYPE.SST_39SF
+	mov		ax, DisableMenuitemFromCSBX
+	je		SHORT .EnableOrDisableMenuitemsUnusedBySstFlash
+	mov		ax, EnableMenuitemFromCSBX
+	; Fall to .EnableOrDisableMenuitemsUnusedBySstFlash
 
 ;--------------------------------------------------------------------
-; .EnableMenuitemsUnusedBySstFlash
+; .EnableOrDisableMenuitemsUnusedBySstFlash
 ;	Parameters:
+;		AX:		Offset to EnableMenuitemFromCSBX / DisableMenuitemFromCSBX
 ;		SS:BP:	Menu handle
 ;	Returns:
 ;		Nothing
 ;	Corrupts registers:
-;		AX, BX
+;		BX
 ;--------------------------------------------------------------------
-ALIGN JUMP_ALIGN
-.EnableMenuitemsUnusedBySstFlash:
+.EnableOrDisableMenuitemsUnusedBySstFlash:
 	mov		bx, g_MenuitemFlashSdpCommand
-	call	EnableMenuitemFromCSBX
+	call	ax
 	mov		bx, g_MenuitemFlashPageSize
-	jmp		EnableMenuitemFromCSBX
-
-;--------------------------------------------------------------------
-; .DisableMenuitemsUnusedBySstFlash
-;	Parameters:
-;		SS:BP:	Menu handle
-;	Returns:
-;		Nothing
-;	Corrupts registers:
-;		AX, BX
-;--------------------------------------------------------------------
-ALIGN JUMP_ALIGN
-.DisableMenuitemsUnusedBySstFlash:
-	mov		bx, g_MenuitemFlashSdpCommand
-	call	DisableMenuitemFromCSBX
-	mov		bx, g_MenuitemFlashPageSize
-	jmp		DisableMenuitemFromCSBX
+	jmp		ax
 
 ;--------------------------------------------------------------------
 ; MENUITEM activation functions (.fnActivate)
@@ -253,10 +239,10 @@ ALIGN JUMP_ALIGN
 StartFlashing:
 	call	.MakeSureThatImageFitsInEeprom
 	jc		SHORT .InvalidFlashingParameters
-	cmp		WORD [cs:g_cfgVars+CFGVARS.bEepromType], EEPROM_TYPE.SST_39SF
-	jnz		SHORT .SkipAlignmentCheck
+	cmp		BYTE [g_cfgVars+CFGVARS.bEepromType], EEPROM_TYPE.SST_39SF
+	jne		SHORT .SkipAlignmentCheck
 	call	.MakeSureAddress32KAligned
-	jc		SHORT .InvalidFlashingParameters
+	jnz		SHORT .InvalidFlashingParameters
 .SkipAlignmentCheck:
 	push	es
 	push	ds
@@ -266,8 +252,8 @@ StartFlashing:
 	call	Memory_ReserveCLbytesFromStackToDSSI
 	call	.InitializeFlashvarsFromDSSI
 	mov		bx, si							; DS:BX now points to FLASHVARS
-	cmp		WORD [cs:g_cfgVars+CFGVARS.bEepromType], EEPROM_TYPE.SST_39SF
-	jz		SHORT .FlashWithoutProgressBar
+	cmp		BYTE [g_cfgVars+CFGVARS.bEepromType], EEPROM_TYPE.SST_39SF
+	je		SHORT .FlashWithoutProgressBar
 	add		si, BYTE FLASHVARS_size			; DS:SI now points to PROGRESS_DIALOG_IO
 	call	Dialogs_DisplayProgressDialogForFlashingWithDialogIoInDSSIandFlashvarsInDSBX
 .FlashComplete:
@@ -281,7 +267,7 @@ StartFlashing:
 
 .FlashWithoutProgressBar:					; Worst case. SST devices will
 	call	FlashSst_WithFlashvarsInDSBX	; either complete flashing
-	jmp		SHORT .FlashComplete			; or timeout within 2 seconds. 
+	jmp		SHORT .FlashComplete			; or timeout within 2 seconds.
 
 ;--------------------------------------------------------------------
 ; .MakeSureThatImageFitsInEeprom
@@ -295,7 +281,7 @@ StartFlashing:
 ALIGN JUMP_ALIGN
 .MakeSureThatImageFitsInEeprom:
 	call	Buffers_GetSelectedEepromSizeInWordsToAX
-	cmp		ax, [cs:g_cfgVars+CFGVARS.wImageSizeInWords]
+	cmp		ax, [g_cfgVars+CFGVARS.wImageSizeInWords]
 	jae		SHORT .ImageFitsInSelectedEeprom
 	mov		dx, g_szErrEepromTooSmall
 	call	Dialogs_DisplayErrorFromCSDX
@@ -311,19 +297,16 @@ ALIGN JUMP_ALIGN, ret
 ;	Parameters:
 ;		SS:BP:	Ptr to MENU
 ;	Returns:
-;		CF:		Set if EEPROM segment is not 32K aligned
+;		ZF:		Cleared if EEPROM segment is not 32K aligned
 ;	Corrupts registers:
-;		AX, BX, DX
+;		AX, DX
 ;--------------------------------------------------------------------
 ALIGN JUMP_ALIGN
 .MakeSureAddress32KAligned:
-	mov		ax, [cs:g_cfgVars+CFGVARS.wEepromSegment]
-	and		ax, 007FFh
+	test	WORD [g_cfgVars+CFGVARS.wEepromSegment], 07FFh
 	jz		SHORT .AlignmentIs32K
 	mov		dx, g_szErrAddrNot32KAligned
-	call	Dialogs_DisplayErrorFromCSDX
-	stc
-	ret
+	jmp		Dialogs_DisplayErrorFromCSDX
 
 ;--------------------------------------------------------------------
 ; .PrepareBuffersForFlashing
@@ -338,7 +321,7 @@ ALIGN JUMP_ALIGN
 .PrepareBuffersForFlashing:
 	call	EEPROM_LoadFromRomToRamComparisonBuffer
 	call	Buffers_AppendZeroesIfNeeded
-	test	BYTE [cs:g_cfgVars+CFGVARS.wFlags], FLG_CFGVARS_CHECKSUM
+	test	BYTE [g_cfgVars+CFGVARS.wFlags], FLG_CFGVARS_CHECKSUM
 	jz		SHORT .DoNotGenerateChecksumByte
 	jmp		Buffers_GenerateChecksum
 
@@ -362,22 +345,22 @@ ALIGN JUMP_ALIGN
 	mov		[si+FLASHVARS.fpNextComparisonPage], di
 	mov		[si+FLASHVARS.fpNextComparisonPage+2], es
 
-	mov		ax, [cs:g_cfgVars+CFGVARS.wEepromSegment]
+	mov		ax, [g_cfgVars+CFGVARS.wEepromSegment]
 	mov		WORD [si+FLASHVARS.fpNextDestinationPage], 0
 	mov		[si+FLASHVARS.fpNextDestinationPage+2], ax
 
-	mov		al, [cs:g_cfgVars+CFGVARS.bEepromType]
+	mov		al, [g_cfgVars+CFGVARS.bEepromType]
 	mov		[si+FLASHVARS.bEepromType], al
 
-	mov		al, [cs:g_cfgVars+CFGVARS.bSdpCommand]
+	mov		al, [g_cfgVars+CFGVARS.bSdpCommand]
 	mov		[si+FLASHVARS.bEepromSdpCommand], al
 
 	mov		ax, SST_PAGE_SIZE
-	cmp		WORD [g_cfgVars+CFGVARS.bEepromType], EEPROM_TYPE.SST_39SF
-	jz		SHORT .UseSstPageSize
+	cmp		BYTE [g_cfgVars+CFGVARS.bEepromType], EEPROM_TYPE.SST_39SF
+	je		SHORT .UseSstPageSize
 
-	eMOVZX	bx, [cs:g_cfgVars+CFGVARS.bEepromPage]
-	mov		ax, [cs:bx+g_rgwEepromPageToSizeInBytes]
+	eMOVZX	bx, [g_cfgVars+CFGVARS.bEepromPage]
+	mov		ax, [bx+g_rgwEepromPageToSizeInBytes]
 .UseSstPageSize:
 	mov		[si+FLASHVARS.wEepromPageSize], ax
 

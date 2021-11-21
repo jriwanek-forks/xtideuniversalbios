@@ -230,8 +230,8 @@ xt_tiny:
 	@echo * Large 386 version "$(TARGET)_386l.bin" built.
 
 custom:
-	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_CUSTOM) -l"$(TARGET)_custom.lst" -o"$(TARGET)_custom.bin"
-	@echo * Custom version "$(TARGET)_custom.bin" built.
+	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_CUSTOM) -l"$(TARGET)_cstm.lst" -o"$(TARGET)_cstm.bin"
+	@echo * Custom version "$(TARGET)_cstm.bin" built.
 
 strings: src\Strings.asm
 	@$(AS) src\Strings.asm $(ASFLAGS) $(DEFS_AT_LARGE) -DCHECK_FOR_UNUSED_ENTRYPOINTS -DMODULE_STRINGS_COMPRESSED_PRECOMPRESS -o build\Strings.bin -l build\StringsPrecompress.lst

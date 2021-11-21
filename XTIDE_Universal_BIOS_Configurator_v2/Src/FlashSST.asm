@@ -2,8 +2,19 @@
 ; Description	:	Functions for flashing SST flash devices.
 
 ;
-; Created by Jayeson Lee-Steere
-; Hereby placed into the public domain.
+; XTIDE Universal BIOS and Associated Tools
+; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2021 by XTIDE Universal BIOS Team.
+;
+; This program is free software; you can redistribute it and/or modify
+; it under the terms of the GNU General Public License as published by
+; the Free Software Foundation; either version 2 of the License, or
+; (at your option) any later version.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU General Public License for more details.
+; Visit http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 ;
 
 ; Section containing code
@@ -26,18 +37,19 @@ FlashSst_WithFlashvarsInDSBX:
 	push	cx
 	push	si
 	push	bp
-	mov		bp, bx					; Flashvars now in SS:BP.
+	mov		bp, bx					; Flashvars now in SS:BP (Assumes SS=DS)
 
 	mov		BYTE [bp+FLASHVARS.flashResult], FLASH_RESULT.DeviceNotDetected
 	call	DetectSstDevice
 	jc		SHORT .ExitOnError
 
 	call	CalibrateSstTimeout
-	
+
 	mov		BYTE [bp+FLASHVARS.flashResult], FLASH_RESULT.PollingTimeoutError
 	mov		cx, [bp+FLASHVARS.wPagesToFlash]
-	lds		si, [bp+FLASHVARS.fpNextSourcePage]
-	les		di, [bp+FLASHVARS.fpNextDestinationPage]
+	mov		dx, [bp+FLASHVARS.wEepromPageSize]
+	les		di, [bp+FLASHVARS.fpNextSourcePage]
+	lds		si, [bp+FLASHVARS.fpNextDestinationPage]
 %ifdef CLD_NEEDED
 	cld
 %endif
@@ -48,15 +60,14 @@ ALIGN JUMP_ALIGN
 	push	si
 	push	di
 	push	cx
-	mov		cx, [bp+FLASHVARS.wEepromPageSize]
-	mov		bx, cx
+	mov		cx, dx
 	repe cmpsb
 	pop		cx
 	pop		di
 	pop		si
-	jnz		SHORT .FlashThisPage
-	add		si, bx
-	add		di, bx
+	jne		SHORT .FlashThisPage
+	add		si, dx
+	add		di, dx
 	jmp		SHORT .ContinueLoop
 
 .FlashThisPage:
@@ -68,17 +79,22 @@ ALIGN JUMP_ALIGN
 	loop	.NextPage
 
 	; The write process has already confirmed the results one byte at a time.
-	; Here we do an additional verify check just in case there was some 
+	; Here we do an additional verify check just in case there was some
 	; kind of oddity with pages / addresses.
 	mov		BYTE [bp+FLASHVARS.flashResult], FLASH_RESULT.DataVerifyError
+%ifndef USE_186
 	mov		ax, [bp+FLASHVARS.wPagesToFlash]
-	mov		cl, SST_PAGE_SIZE_SHIFT
+	mov		cl, SST_PAGE_SIZE_SHIFT - 1		; -1 because we compare WORDs (verifying 64 KB won't work otherwise)
 	shl		ax, cl
-	mov		cx, ax
+	xchg	cx, ax
+%else
+	mov		cx, [bp+FLASHVARS.wPagesToFlash]
+	shl		cx, SST_PAGE_SIZE_SHIFT - 1
+%endif
 	lds		si, [bp+FLASHVARS.fpNextSourcePage]
 	les		di, [bp+FLASHVARS.fpNextDestinationPage]
-	repe cmpsb
-	jnz		SHORT .ExitOnError
+	repe cmpsw
+	jne		SHORT .ExitOnError
 
 %ifndef CHECK_FOR_UNUSED_ENTRYPOINTS
 %if FLASH_RESULT.success = 0	; Just in case this should ever change
@@ -105,36 +121,34 @@ ALIGN JUMP_ALIGN
 ;		CF:	Clear if supported SST device found
 ;			Set if supported SST device not found
 ;	Corrupts registers:
-;		AX, DI, ES
+;		AX, BX, SI, DS
 ;--------------------------------------------------------------------
 ALIGN JUMP_ALIGN
 DetectSstDevice:
-	les		di, [bp+FLASHVARS.fpNextDestinationPage]
+	lds		si, [bp+FLASHVARS.fpNextDestinationPage]
+	mov		bx, 5555h
 
 	cli
-	mov		BYTE [es:05555h], 0AAh	; Enter software ID sequence.
-	mov		BYTE [es:02AAAh], 055h
-	mov		BYTE [es:05555h], 090h
-	mov		al, [es:di]				; Extra reads to be sure device
-	mov		al, [es:di]				; has time to respond.
-	mov		al, [es:di]
-	mov		ah, [es:di]				; Vendor ID in AH.
-	mov		al, [es:di + 1]			; Device ID in AL.
-	mov		BYTE [es:05555h], 0F0h	; Exit software ID.
+	mov		BYTE [bx], 0AAh			; Enter software ID sequence.
+	shr		bx, 1					; BX=2AAAh, CF=1
+	mov		BYTE [bx], 55h
+	eRCL_IM	bx, 1					; BX=5555h
+	mov		BYTE [bx], 90h
+	mov		al, [si]				; Extra reads to be sure device
+	mov		al, [si]				; has time to respond.
+	mov		al, [si]
+	mov		ah, [si]				; Vendor ID in AH.
+	mov		al, [si+1]				; Device ID in AL.
+	mov		BYTE [bx], 0F0h			; Exit software ID.
 	sti
 
-	cmp		al, 0B4h
+	cmp		ax, 0BFB4h
 	jb		SHORT .NotValidDevice
-	cmp		al, 0B7h
-	ja		SHORT .NotValidDevice
-	cmp		ah, 0BFh
-	jne		SHORT .NotValidDevice
+	cmp		ax, 0BFB7h+1
+	cmc
+.NotValidDevice:
 	ret
 
-.NotValidDevice:
-	stc
-	ret
-	
 ;--------------------------------------------------------------------
 ; CalibrateSstTimeout
 ;	Parameters:
@@ -146,123 +160,128 @@ DetectSstDevice:
 ;--------------------------------------------------------------------
 ALIGN JUMP_ALIGN
 CalibrateSstTimeout:
-	LOAD_BDA_SEGMENT_TO	ds, ax
-	les		di, [bp+FLASHVARS.fpNextDestinationPage]
-	xor		cx, cx
+	LOAD_BDA_SEGMENT_TO	es, cx, !
+	mov		ds, [bp+FLASHVARS.fpNextDestinationPage+2]
+	mov		bx, BDA.dwTimerTicks
 	mov		si, cx
 	mov		di, cx
-	mov		al, [es:di]
-	not		al							; Forces poll to fail.
+	mov		al, [di]
+	inc		ax						; Forces poll to fail
 
-	mov		bx, [BDA.dwTimerTicks]		; Read low word only.
-	inc		bx
+	mov		ah, [es:bx]				; Read low byte only
+	inc		ah
 .WaitForFirstIncrement:
-	cmp		bx, [BDA.dwTimerTicks]
-	jnz		SHORT .WaitForFirstIncrement
+	cmp		ah, [es:bx]
+	jne		SHORT .WaitForFirstIncrement
 
-	inc		bx
+	inc		ah
 
 .WaitForSecondIncrement:
-	inc		ch							; cx now 0x0100
-.PollLoop:								; Identical to poll loop used 
-	cmp		[es:di], al					; during programming
-	jz		SHORT .PollComplete			; Will never branch in this case
-	loop	.PollLoop
-.PollComplete:
-	add		si, 1						; number of poll loops completed
-	jc		SHORT .countOverflow
-	cmp		bx, [BDA.dwTimerTicks]
-	jnz		SHORT .WaitForSecondIncrement
-
-.CalComplete:
-	; SI ~= number of polling loops in 215us.
-	mov		[bp+FLASHVARS.wTimeoutCounter], si
-	ret
-		
-.countOverflow:
+	inc		ch						; CX now 0x0100
+.PollLoop:							; Identical to poll loop used
+	cmp		[di], al				; during programming
+	loopne	.PollLoop				; Will never be equal in this case
+	inc		si						; Number of poll loops completed
+	jz		SHORT .CountOverflow
+	cmp		ah, [es:bx]
+	jne		SHORT .WaitForSecondIncrement
+	SKIP1B	al
+.CountOverflow:
 	; Clamp on overflow, although it should not be possible on
 	; real hardware. In principle SI could overflow on a very
 	; fast CPU. However the SST device is on a slow bus. Even
 	; running at the min read cycle time of fastest version of
 	; the device, SI can not overflow.
 	dec		si
-	jmp		SHORT .CalComplete
+
+	; SI ~= number of polling loops in 215us.
+	mov		[bp+FLASHVARS.wTimeoutCounter], si
+	ret
 
 ;--------------------------------------------------------------------
 ; EraseSstPage
 ;	Parameters:
-;		ES:DI:	Destination ptr.
+;		DS:SI:	Destination ptr
 ;	Returns:
 ;		CF:		Set on error.
 ;	Corrupts registers:
-;		AX
+;		AX, BX
 ;--------------------------------------------------------------------
 ALIGN JUMP_ALIGN
 EraseSstPage:
 	push	cx
 
-	mov		BYTE [es:05555h], 0AAh	; Sector erase sequence.
-	mov		BYTE [es:02AAAh], 055h
-	mov		BYTE [es:05555h], 080h
-	mov		BYTE [es:05555h], 0AAh
-	mov		BYTE [es:02AAAh], 055h
-	mov		BYTE [es:di], 030h
+	mov		bx, 5555h
+	mov		ax, 2AAAh
 
+	; Sector erase sequence.
+	mov		[bx], al				; [5555h] <- AAh
+	xchg	bx, ax
+	mov		[bx], al				; [2AAAh] <- 55h
+	xchg	bx, ax
+	mov		BYTE [bx], 80h			; [5555h] <- 80h
+	mov		[bx], al				; [5555h] <- AAh
+	xchg	bx, ax
+	mov		[bx], al				; [2AAAh] <- 55h
+	mov		BYTE [si], 30h
+
+	or		bl, al					; BL = 0FFh
 	mov		ax, 1163				; 1163 x ~215us = 250ms = 10x datasheet max
 .TimeoutOuterLoop:
 	mov		cx, [bp+FLASHVARS.wTimeoutCounter]
 .TimeoutInnerLoop:
-	cmp		BYTE [es:di], 0FFh		; Will return 0FFh when erase complete.
-	jz		SHORT .Exit
-	loop	.TimeoutInnerLoop
+	cmp		[si], bl				; Will return 0FFh when erase complete
+	loopne	.TimeoutInnerLoop
+	je		SHORT .Return
 	dec		ax
 	jnz		SHORT .TimeoutOuterLoop
-	stc								; Timed out.
-.Exit:
+	; Timed out (CF=1)
+.Return:
 	pop		cx
 	ret
 
 ;--------------------------------------------------------------------
 ; WriteSstPage
 ;	Parameters:
-;		DS:SI:	Source ptr.
-;		ES:DI:	Destination ptr.
+;		DX:		EEPROM page size
+;		DS:SI:	Destination ptr
+;		ES:DI:	Source ptr
 ;	Returns:
 ;		SI, DI:	Each advanced forward 1 page.
 ;		CF:		Set on error.
 ;	Corrupts registers:
-;		AL, BX, DX
+;		AL, BX
 ;--------------------------------------------------------------------
 ALIGN JUMP_ALIGN
 WriteSstPage:
 	push	cx
+	push	dx
 
 	mov		bx, [bp+FLASHVARS.wTimeoutCounter]
-	mov		dx, [bp+FLASHVARS.wEepromPageSize]
+	xchg	si, di
 	cli
 
 .NextByte:
-	lodsb
-	mov		BYTE [es:05555h], 0AAh	; Byte program sequence.
-	mov		BYTE [es:02AAAh], 055h
-	mov		BYTE [es:05555h], 0A0h
-	mov		[es:di], al
+	es lodsb						; Read byte from ES:SI
+	mov		BYTE [5555h], 0AAh		; Byte program sequence.
+	mov		BYTE [2AAAh], 55h
+	mov		BYTE [5555h], 0A0h
+	mov		[di], al				; Write byte to DS:DI
 
 	mov		cx, bx
 .WaitLoop:
-	cmp		[es:di], al				; Device won't return actual data until 
-	jz		SHORT .ByteFinished		; write complete. Timeout ~215us, or 
-	loop	.WaitLoop				; ~10x 20us max program time from datasheet.
+	cmp		[di], al				; Device won't return actual data until write complete.
+	loopne	.WaitLoop				; Timeout ~215us, or ~10x 20us max program time from datasheet.
+	jne		SHORT .WriteTimeout
 
-	stc								; Write timeout.
-	jmp		SHORT .Exit
-
-.ByteFinished:
 	inc		di
 	dec		dx
 	jnz		SHORT .NextByte
-	clc
-.Exit:
+	SKIP1B	al
+.WriteTimeout:
+	stc
 	sti
+	xchg	si, di
+	pop		dx
 	pop		cx
 	ret

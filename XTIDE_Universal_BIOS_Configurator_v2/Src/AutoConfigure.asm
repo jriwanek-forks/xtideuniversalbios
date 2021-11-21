@@ -117,18 +117,26 @@ CalculateCRC_CCITTfromDSSIwithSizeInCX:
 	lodsb
 	xor		dh, al
 	mov		bl, dh
+%ifdef USE_186
+	rol		bx, 4
+%else
 	rol		bx, 1
 	rol		bx, 1
 	rol		bx, 1
 	rol		bx, 1
+%endif
 	xor		dx, bx
 	rol		bx, 1
 	xchg	dh, dl
 	xor		dx, bx
+%ifdef USE_186
+	ror		bx, 4
+%else
 	ror		bx, 1
 	ror		bx, 1
 	ror		bx, 1
 	ror		bx, 1
+%endif
 	and		bl, ah
 	xor		dx, bx
 	ror		bx, 1
@@ -155,11 +163,11 @@ DetectOlivettiM24:
 	int		BIOS_TIME_PCI_PNP_INTERRUPT_1Ah
 	inc		ch			; Hours changed?
 	jz		SHORT .ThisIsNotAnOlivettiM24
-	mov		BYTE [cs:IsOlivettiM24], 1
+	mov		BYTE [cs:bIsOlivettiM24], 1
 .ThisIsNotAnOlivettiM24:
 	ret
 
-IsOlivettiM24:
+bIsOlivettiM24:
 	db		0
 
 
@@ -248,6 +256,8 @@ DetectIdePortsAndDevices:
 ALIGN JUMP_ALIGN
 EnableInterruptsForAllStandardControllers:
 	jcxz	.NoControllersDetected
+	test	BYTE [ROMVARS.wFlags+1], FLG_ROMVARS_MODULE_IRQ >> 8
+	jz		SHORT .NoModuleIrq
 	call	Buffers_IsXTbuildLoaded
 	je		SHORT .DoNotEnableIRQforXTbuilds
 	push	di
@@ -284,6 +294,7 @@ EnableInterruptsForAllStandardControllers:
 	pop		cx
 	pop		di
 .DoNotEnableIRQforXTbuilds:
+.NoModuleIrq:
 .NoControllersDetected:
 	ret
 

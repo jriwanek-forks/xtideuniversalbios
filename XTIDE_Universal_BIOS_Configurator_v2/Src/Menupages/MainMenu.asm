@@ -284,7 +284,14 @@ LoadOldSettingsFromEeprom:
 	mov		dx, g_szDlgMainLoadStngs
 	call	Dialogs_DisplayNotificationFromCSDX
 	call	EEPROM_FindXtideUniversalBiosROMtoESDI
-	call	LoadColorTheme.FromROM
+	call	LoadColorTheme.FromROM			; Returns the color theme index in AX
+	test	BYTE [g_cfgVars+CFGVARS.wFlags], FLG_CFGVARS_FILELOADED
+	jz		SHORT .FileNotLoaded
+	; A file has been loaded so we need to copy the theme to that as well
+	call	Buffers_GetFileBufferToESDI
+	add		di, ROMVARS.pColorTheme
+	call	WriteColorTheme
+.FileNotLoaded:
 	jmp		MainMenu_EnterMenuOrModifyItemVisibility
 
 

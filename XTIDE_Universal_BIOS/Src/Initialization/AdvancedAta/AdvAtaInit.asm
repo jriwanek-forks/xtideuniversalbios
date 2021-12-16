@@ -181,3 +181,20 @@ AdvAtaInit_SelectSlowestCommonPioTimingsToBXandCXfromDSSIandDSDI:
 	MAX_U	cx, [si+DPT_ADVANCED_ATA.wMinPioCycleTime]
 .PioTimingsLoadedToBXandCX:
 	ret
+
+
+;--------------------------------------------------------------------
+; Just a simple IN AL, DX instruction but the function call works
+; as I/O delay.
+;
+; AdvAtaInit_InWithDelay
+;	Parameters:
+;		DX:		Port to read from
+;	Returns:
+;		AL:		Byte read from port
+;	Corrupts registers:
+;		Nothing
+;--------------------------------------------------------------------	
+AdvAtaInit_InputWithDelay:
+	in		al, dx
+	ret

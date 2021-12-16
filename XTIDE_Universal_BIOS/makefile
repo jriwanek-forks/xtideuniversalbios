@@ -133,7 +133,7 @@ DEFINES_CUSTOM = ?
 # Note! The size must be a multiple of 2 KB for compatibility reasons.
 BIOS_SIZE_TINY = 4096
 BIOS_SIZE_SMALL = 8192
-BIOS_SIZE_LARGE = 10240
+BIOS_SIZE_LARGE = 12288
 BIOS_SIZE_CUSTOM = ?
 
 # Add -D in front of every preprocessor define declaration

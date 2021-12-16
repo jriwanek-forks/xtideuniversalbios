@@ -134,13 +134,18 @@ IdeDPT_Finalize:	; Unused entrypoint OK
 
 	; We have detected 32-bit controller so change Device Type since
 	; it might have been set to 16-bit on IDEVARS
+	;
+	; Change to 32-bit on 386 builds only. We leave AT builds unchanged for faster troubleshooting
+	; and for uncommon systems, like IBM 486SLC2 processors that can have VLB motherboard even though
+	; the IBM 486SLC2 is externally 16-bit CPU
 .ChangeTo32bitDevice:
+%ifdef USE_386
 	mov		BYTE [di+DPT_ATA.bDevice], DEVICE_32BIT_ATA
+%endif
 .NoAdvancedControllerDetected:
 %endif	; MODULE_ADVANCED_ATA
 
-
-; End DPT
+	; End DPT
 	clc
 	ret
 

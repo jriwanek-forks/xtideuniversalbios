@@ -64,9 +64,9 @@ ALIGN JUMP_ALIGN
 	adc		ah, al								; Add in first drive number and number of drives
 
 	cmp		ah, dl								; Check second drive if two, first drive if only one
-	jz		SHORT .CalcDPTForDriveNumber
+	je		SHORT .CalcDPTForDriveNumber
 	cmp		al, dl								; Check first drive in all cases, redundant but OK to repeat
-	jnz		SHORT .DiskIsNotHandledByThisBIOS
+	jne		SHORT .DiskIsNotHandledByThisBIOS
 %else
 	cmp		dl, ah								; Above last supported?
 	jae		SHORT .DiskIsNotHandledByThisBIOS
@@ -99,13 +99,13 @@ ALIGN JUMP_ALIGN
 	mov		ax, [RAMVARS.wFirstDrvAndCount]
 
 	test	dl, dl
-	js		.harddisk
+	js		SHORT .Harddisk
 
 	call	RamVars_UnpackFlopCntAndFirstToAL
 	add		dl, ah						; add in end of hard disk DPT list, floppies start immediately after
 
 ALIGN JUMP_ALIGN
-.harddisk:
+.Harddisk:
 	sub		dl, al						; subtract off beginning of either hard disk or floppy list (as appropriate)
 %else
 	sub		dl, [RAMVARS.bFirstDrv]		; subtract off beginning of hard disk list
@@ -113,7 +113,6 @@ ALIGN JUMP_ALIGN
 
 .CalcDPTForNewDrive:
 	mov		al, LARGEST_DPT_SIZE
-
 	mul		dl
 	add		ax, RAMVARS_size			; Clears CF (will not overflow)
 

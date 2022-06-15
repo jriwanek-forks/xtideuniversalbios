@@ -30,21 +30,24 @@
 # MODULE_VERY_LATE_INIT       Initialize on INT 13h if our INT 19h handler is not called           #
 # MODULE_POWER_MANAGEMENT     Power Management support                                             #
 # MODULE_WIN9X_CMOS_HACK      Hack for Windows 9x compatibility                                    #
-# MODULE_MFM_COMPATIBILITY    Restores BDA drive count for MFM controllers that expect to be the   #
-#                             only hard drive controller on the system                             #
+# MODULE_MFM_COMPATIBILITY    Restores BDA drive count for MFM/SCSI controllers that expect to be  #
+#                             the only hard drive controller in the system                         #
 #                                                                                                  #
 # Not modules but these affect the assembly:                                                       #
 # ELIMINATE_CGA_SNOW          Prevents CGA snowing at the cost of a few bytes                      #
 # RELOCATE_INT13H_STACK **    Relocates INT 13h stack to beginning of stolen conventional memory   #
 # NO_ATAID_VALIDATION ***     Excludes code that tries to ensure proper communication with drives  #
 # NO_ATAID_CORRECTION         Excludes code that corrects illegal CHS values from some CF cards    #
+# USE_086                     Applies WORD alignment padding for use with 8086/V30 CPUs only       #
 # USE_186                     Use instructions supported by 80188/80186 and V20/V30 and later      #
 # USE_286                     Use instructions supported by 286 and later (defines USE_UNDOC_INTEL)#
 # USE_386                     Use instructions supported by 386 and later (defines USE_286)        #
 # USE_AT                      Use features supported on AT and later systems (not available on XT) #
-# USE_UNDOC_INTEL             Optimizations for Intel CPU:s - do NOT use on NEC V20/V30/Sony CPU:s #
-# USE_NEC_V                   Optimizations for use with NEC V20/V30 processors only               #
+# USE_UNDOC_INTEL             Optimizations for Intel CPUs - do NOT use on NEC V20/V30/Sony CPUs   #
+# USE_NEC_V                   Optimizations for use with NEC V20/V30 CPUs only                     #
 # CLD_NEEDED                  Only needed for compatibility with buggy software/BIOSes             #
+# EXTRA_LOOP_UNROLLING_SMALL  Improves transfer speed on some CPU + IDE controller combinations    #
+# EXTRA_LOOP_UNROLLING_LARGE  Same as above but faster and uses more ROM space                     #
 #                                                                                                  #
 # ** AT Builds only (when USE_AT is defined)                                                       #
 # *** Use this only when certain known good drives are not being detected (eg WD Caviars)          #
@@ -107,8 +110,8 @@ HEADERS += $(LIBS)
 ##################################
 # Assembler preprocessor defines #
 ##################################
-DEFINES_COMMON = MODULE_STRINGS_COMPRESSED MODULE_HOTKEYS MODULE_8BIT_IDE MODULE_EBIOS MODULE_SERIAL MODULE_SERIAL_FLOPPY MODULE_POWER_MANAGEMENT NO_ATAID_VALIDATION CLD_NEEDED
-DEFINES_COMMON_LARGE = MODULE_BOOT_MENU MODULE_8BIT_IDE_ADVANCED MODULE_COMPATIBLE_TABLES
+DEFINES_COMMON = MODULE_STRINGS_COMPRESSED MODULE_HOTKEYS MODULE_8BIT_IDE MODULE_EBIOS MODULE_SERIAL MODULE_SERIAL_FLOPPY MODULE_POWER_MANAGEMENT NO_ATAID_VALIDATION CLD_NEEDED EXTRA_LOOP_UNROLLING_SMALL
+DEFINES_COMMON_LARGE = MODULE_BOOT_MENU MODULE_8BIT_IDE_ADVANCED MODULE_COMPATIBLE_TABLES EXTRA_LOOP_UNROLLING_LARGE
 
 DEFINES_XT = $(DEFINES_COMMON) ELIMINATE_CGA_SNOW MODULE_8BIT_IDE_ADVANCED
 DEFINES_XTPLUS = $(DEFINES_XT) USE_186

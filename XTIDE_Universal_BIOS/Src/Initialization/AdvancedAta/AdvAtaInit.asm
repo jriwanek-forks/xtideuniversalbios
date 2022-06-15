@@ -187,14 +187,14 @@ AdvAtaInit_SelectSlowestCommonPioTimingsToBXandCXfromDSSIandDSDI:
 ; Just a simple IN AL, DX instruction but the function call works
 ; as I/O delay.
 ;
-; AdvAtaInit_InWithDelay
+; AdvAtaInit_InputWithDelay
 ;	Parameters:
 ;		DX:		Port to read from
 ;	Returns:
 ;		AL:		Byte read from port
 ;	Corrupts registers:
 ;		Nothing
-;--------------------------------------------------------------------	
+;--------------------------------------------------------------------
 AdvAtaInit_InputWithDelay:
 	in		al, dx
 	ret

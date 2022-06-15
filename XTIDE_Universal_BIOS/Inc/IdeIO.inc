@@ -145,5 +145,25 @@
 %endif
 %endmacro
 
+%macro UNROLL_SECTORS_IN_CX_TO_16WORDS 0
+%ifdef USE_186
+	shl		cx, 4
+%else
+	mov		ch, cl
+	mov		cl, 4
+	shr		cx, cl
+%endif
+%endmacro
+
+%macro UNROLL_SECTORS_IN_CX_TO_32WORDS 0
+%ifdef USE_186
+	shl		cx, 3
+%else
+	shl		cx, 1
+	shl		cx, 1
+	shl		cx, 1
+%endif
+%endmacro
+
 
 %endif ; IDE_IO_INC

@@ -132,16 +132,12 @@ IdeDPT_Finalize:	; Unused entrypoint OK
 	MIN_U	[di+DPT_ADVANCED_ATA.bPioMode], al
 	mov		[di+DPT_ADVANCED_ATA.wMinPioCycleTime], bx
 
-	; We have detected 32-bit controller so change Device Type since
-	; it might have been set to 16-bit on IDEVARS
-	;
-	; Change to 32-bit on 386 builds only. We leave AT builds unchanged for faster troubleshooting
-	; and for uncommon systems, like IBM 486SLC2 processors that can have VLB motherboard even though
-	; the IBM 486SLC2 is externally 16-bit CPU
+	; We have detected 32-bit controller so change Device Type
+	; since it might have been set to 16-bit on IDEVARS
 .ChangeTo32bitDevice:
-%ifdef USE_386
+	; *FIXME* We might need to add code to detect the IBM 486SLC2 CPU (and possibly other
+	; 386+ class CPUs with a 16-bit external bus?) to avoid changing to DEVICE_32BIT_ATA.
 	mov		BYTE [di+DPT_ATA.bDevice], DEVICE_32BIT_ATA
-%endif
 .NoAdvancedControllerDetected:
 %endif	; MODULE_ADVANCED_ATA
 

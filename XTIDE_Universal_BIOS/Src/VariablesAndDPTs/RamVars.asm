@@ -134,37 +134,6 @@ RamVars_GetHardDiskCountFromBDAtoAX:
 %endif
 
 
-;--------------------------------------------------------------------
-; RamVars_GetCountOfKnownDrivesToAX
-;	Parameters:
-;		DS:		RAMVARS segment
-;	Returns:
-;		AX:		Total hard disk count
-;	Corrupts registers:
-;		None
-;--------------------------------------------------------------------
-ALIGN JUMP_ALIGN
-RamVars_GetCountOfKnownDrivesToAX:
-	mov		ax, [RAMVARS.wFirstDrvAndCount]
-	add		al, ah
-	and		ax, BYTE 7fh
-	ret
-
-;--------------------------------------------------------------------
-; RamVars_GetIdeControllerCountToCX
-;	Parameters:
-;		Nothing
-;	Returns:
-;		CX:		Number of IDE controllers to handle
-;	Corrupts registers:
-;		Nothing
-;--------------------------------------------------------------------
-ALIGN JUMP_ALIGN
-RamVars_GetIdeControllerCountToCX:
-	eMOVZX	cx, [cs:ROMVARS.bIdeCnt]
-	ret
-
-
 %ifdef MODULE_SERIAL_FLOPPY
 ;--------------------------------------------------------------------
 ; RamVars_UnpackFlopCntAndFirstToAL
@@ -183,3 +152,35 @@ RamVars_UnpackFlopCntAndFirstToAL:
 	sar		al, 1
 	ret
 %endif
+
+
+;--------------------------------------------------------------------
+; RamVars_GetIdeControllerCountToCX
+;	Parameters:
+;		Nothing
+;	Returns:
+;		CX:		Number of IDE controllers to handle
+;	Corrupts registers:
+;		Nothing
+;--------------------------------------------------------------------
+ALIGN JUMP_ALIGN
+RamVars_GetIdeControllerCountToCX:
+	eMOVZX	cx, [cs:ROMVARS.bIdeCnt]
+	ret
+
+
+;--------------------------------------------------------------------
+; RamVars_GetCountOfKnownDrivesToAX
+;	Parameters:
+;		DS:		RAMVARS segment
+;	Returns:
+;		AX:		Total hard disk count
+;	Corrupts registers:
+;		None
+;--------------------------------------------------------------------
+ALIGN JUMP_ALIGN
+RamVars_GetCountOfKnownDrivesToAX:
+	mov		ax, [RAMVARS.wFirstDrvAndCount]
+	add		al, ah
+	and		ax, BYTE 7Fh
+	ret

@@ -65,31 +65,6 @@ Memory_CopyCXbytesFromDSSItoESDI:
 
 
 ;--------------------------------------------------------------------
-; Memory_ZeroSSBPwithSizeInCX
-;	Parameters
-;		CX:		Number of bytes to zero
-;		SS:BP:	Ptr to buffer to zero
-;	Returns:
-;		Nothing
-;	Corrupts registers:
-;		CX
-;--------------------------------------------------------------------
-%ifdef INCLUDE_MENU_LIBRARY
-ALIGN JUMP_ALIGN
-Memory_ZeroSSBPwithSizeInCX:
-	push	es
-	push	di
-	push	ax
-	call	Registers_CopySSBPtoESDI
-	call	Memory_ZeroESDIwithSizeInCX
-	pop		ax
-	pop		di
-	pop		es
-	ret
-%endif
-
-
-;--------------------------------------------------------------------
 ; Memory_ZeroESDIwithSizeInCX
 ;	Parameters
 ;		CX:		Number of bytes to zero
@@ -118,6 +93,31 @@ Memory_ZeroESDIwithSizeInCX:
 Memory_StoreCXbytesFromAccumToESDI:
 	OPTIMIZE_STRING_OPERATION stos
 	ret
+
+
+;--------------------------------------------------------------------
+; Memory_ZeroSSBPwithSizeInCX
+;	Parameters
+;		CX:		Number of bytes to zero
+;		SS:BP:	Ptr to buffer to zero
+;	Returns:
+;		Nothing
+;	Corrupts registers:
+;		CX
+;--------------------------------------------------------------------
+%ifdef INCLUDE_MENU_LIBRARY
+ALIGN JUMP_ALIGN
+Memory_ZeroSSBPwithSizeInCX:
+	push	es
+	push	di
+	push	ax
+	call	Registers_CopySSBPtoESDI
+	call	Memory_ZeroESDIwithSizeInCX
+	pop		ax
+	pop		di
+	pop		es
+	ret
+%endif
 
 
 ;--------------------------------------------------------------------

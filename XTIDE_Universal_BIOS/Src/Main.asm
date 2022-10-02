@@ -70,7 +70,9 @@ istruc ROMVARS
 	at	ROMVARS.rgbJump,	jmp	Initialize_FromMainBiosRomSearch
 	at	ROMVARS.rgbSign,	db	FLASH_SIGNATURE
 	at	ROMVARS.szTitle,	db	TITLE_STRING
-	at	ROMVARS.szVersion,	db	ROM_VERSION_STRING
+	at	ROMVARS.szVersion,	db	"r"
+							db	ROM_VERSION_STRING
+							db	BUILD_DATE_STRING,NULL
 
 ;---------------------------;
 ; AT Build default settings ;

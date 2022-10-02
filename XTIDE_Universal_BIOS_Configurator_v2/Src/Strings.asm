@@ -24,7 +24,9 @@ SECTION .data
 g_s$NotMinimumDosVersion:			db	LF,"This program requires DOS version 2 or higher.",LF,"$"
 
 ; Menu title
-g_szProgramTitle:					db	"Configuration and Flashing program for XTIDE Universal BIOS v2.0.0.",LF,CR,NULL
+g_szProgramTitle:					db	"Configuration and Flashing program for XTIDE Universal BIOS r"
+									db	ROM_VERSION_STRING
+									db	LF,CR,NULL
 g_sXtideUniversalBiosSignature:		db	FLASH_SIGNATURE		; No need to terminate with NULL.
 g_szBiosIsNotLoaded:				db	"BIOS is not loaded!",NULL
 g_szEEPROM:							db	"EEPROM",NULL
@@ -95,12 +97,12 @@ g_szNfoMainLoadStngs:	db	"Load old XTIDE Universal BIOS settings from EEPROM.",N
 g_szNfoMainConfigure:	db	"Configure XTIDE Universal BIOS settings.",NULL
 g_szNfoMainFlash:		db	"Flash loaded BIOS image to EEPROM.",NULL
 g_szNfoMainSave:		db	"Save BIOS changes back to original file from which it was loaded.",NULL
-g_szNfoMainLicense:		db	"XTIDE Universal BIOS and XTIDECFG Copyright (C) 2009-2010 by Tomi Tilli, 2011-2021 by XTIDE Universal BIOS Team."
+g_szNfoMainLicense:		db	"XTIDE Universal BIOS and XTIDECFG Copyright (C) 2009-2010 by Tomi Tilli, 2011-2022 by XTIDE Universal BIOS Team."
 						db	" Released under GNU GPL v2, with ABSOLUTELY NO WARRANTY. Press ENTER for more details...",NULL
 g_szNfoMainHomePage:	db	"Visit http://xtideuniversalbios.org (home page) and http://forum.vcfed.org (support)",NULL
 
 g_szHelpMainLicense:	db	"XTIDE Universal BIOS and XTIDECFG Configuration program are Copyright 2009-2010 by Tomi Tilli,"
-						db	" 2011-2021 by XTIDE Universal BIOS Team. Released under GNU GPL v2. This software comes with ABSOLUTELY NO WARRANTY."
+						db	" 2011-2022 by XTIDE Universal BIOS Team. Released under GNU GPL v2. This software comes with ABSOLUTELY NO WARRANTY."
 						db	" This is free software, and you are welcome to redistribute it under certain conditions."
 						db	" See the LICENSE.TXT file that was included with this distribution,"
 						db	" visit http://www.gnu.org/licenses/ gpl-2.0.html, or visit http://xtideuniversalbios.org.",NULL

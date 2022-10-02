@@ -1,4 +1,3 @@
-; /*
 ; Project name	:	XTIDE Universal BIOS
 ; Description	:	Version information.
 
@@ -19,6 +18,7 @@
 ;
 
 ; Flash signature revisions:
+; XUB209	Shortened the BIOS version string (ROMVARS.szVersion) and WORD aligned the IDEVARS structures
 ; XUB208	Added option to skip slave drive detection
 ; XTIDE207	Added device type DEVICE_8BIT_XTIDE_REV2_OLIVETTI
 ; XTIDE206	Added support for Color Themes
@@ -26,47 +26,31 @@
 ;			PIO modes (prevents empty indexes in PIO jump tables)
 ;
 
-;--------------------------------------------------------------------------------
-;
-; Assembler Version
-;
-
 %ifndef VERSION_INC
 %define VERSION_INC
 
 
-%define TITLE_STRING_START	"-=XTIDE Universal BIOS "
+%define TITLE_STRING_START		"-=XTIDE Universal BIOS "
 %ifdef USE_AT
 	%ifdef USE_386
-		%define	TITLE_STRING_END	"(386)=-",NULL
+		%define TITLE_STRING_END	"(386)=-"
 	%else
-		%define	TITLE_STRING_END	"(AT)=-",NULL
+		%define TITLE_STRING_END	"(AT)=-"
 	%endif
 %elifdef USE_186
-	%define	TITLE_STRING_END	"(XT+)=-",NULL
+	%define TITLE_STRING_END	"(XT+)=-"
 %else
-	%define	TITLE_STRING_END	"(XT)=-",NULL
+	%define TITLE_STRING_END	"(XT)=-"
 %endif
 
-%define	TITLE_STRING			TITLE_STRING_START, TITLE_STRING_END
-%define	ROM_VERSION_STRING		"v2.0.0",BETA,"3+ (",__DATE__,")",NULL
-%define	FLASH_SIGNATURE			"XUB208"	; Do not terminate with NULL
+%define TITLE_STRING			TITLE_STRING_START,TITLE_STRING_END,NULL
+%define ROM_VERSION_STRING		incbin "Revision.inc"	; This file must include a trailing space
+; Note!
+; NASM will throw weird errors when using ROM_VERSION_STRING if it's not a single statement on its own line.
+; This is likely due to the "unusual" way it is defined above. Make sure to not have any additional strings
+; on the same line, either before or after. In fact, do not even put a preceding label on the same line!
+%define BUILD_DATE_STRING		"(",__DATE__,")"
+%define FLASH_SIGNATURE			"XUB209"	; Do not terminate with NULL
 
 
 %endif ; VERSION_INC
-
-%if 0			; equivalent of a NASM comment block
-;*/
-
-//--------------------------------------------------------------------------------
-//
-// C/C++ Version
-//
-
-#define BETA " Beta "
-
-#define ROM_VERSION_STRING		"v2.0.0" BETA "3 (" __DATE__ ")"
-
-/*
-%endif
-;*/

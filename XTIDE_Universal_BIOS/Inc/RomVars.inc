@@ -141,7 +141,7 @@ struc ROMVARS
 
 	.rgbSign			resb	6	; Signature for XTIDE Configurator Program (must be even length)
 	.szTitle			resb	31	; BIOS title string
-	.szVersion			resb	25	; BIOS version string
+	.szVersion			resb	19	; BIOS version string (supports up to r9999)
 
 	.wFlags				resb	2	; Word for ROM flags
 	.wDisplayMode		resb	2	; Display mode for boot menu
@@ -153,6 +153,7 @@ struc ROMVARS
 	.bStealSize			resb	1	; Number of 1kB blocks stolen from 640kB base RAM
 	.bIdleTimeout		resb	1	; Standby timer value
 
+						alignb	2	; WORD align the IDEVARS structures
 	.ideVarsBegin:
 	.ideVars0			resb	IDEVARS_size
 	.ideVars1			resb	IDEVARS_size

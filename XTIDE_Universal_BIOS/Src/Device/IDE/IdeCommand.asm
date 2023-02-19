@@ -3,7 +3,7 @@
 
 ;
 ; XTIDE Universal BIOS and Associated Tools
-; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2013 by XTIDE Universal BIOS Team.
+; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2023 by XTIDE Universal BIOS Team.
 ;
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -302,7 +302,7 @@ OutputSectorCountAndAddress:
 ;		BX, DX
 ;--------------------------------------------------------------------
 ALIGN JUMP_ALIGN
-IdeCommand_ReadLBAlowRegisterToAL:
+IdeCommand_ReadLBAlowRegisterToAL:	; Unused entrypoint OK
 	; HOB bit (defined in 48-bit address feature set) should be zero by default
 	; so we get the correct value for CHS, LBA28 and LBA48 drives and commands
 	INPUT_TO_AL_FROM_IDE_REGISTER	LBA_LOW_REGISTER

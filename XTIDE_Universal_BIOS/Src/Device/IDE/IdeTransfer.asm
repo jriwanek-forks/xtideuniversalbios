@@ -3,7 +3,7 @@
 
 ;
 ; XTIDE Universal BIOS and Associated Tools
-; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2013 by XTIDE Universal BIOS Team.
+; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2023 by XTIDE Universal BIOS Team.
 ;
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -49,6 +49,14 @@ SECTION .text
 ;--------------------------------------------------------------------
 ALIGN JUMP_ALIGN
 IdeTransfer_StartWithCommandInAL:
+%ifdef USE_PS2
+	; Turn on the software controlled HDD LED on IBM PS/2 machines
+	xchg	bx, ax	; Save AX
+	in		al, 92h	; Read System Control Port A
+	or		al, 80h	; Set bit 7 to turn on LED (bit 6 would also work)
+	out		92h, al	; Write it back
+	xchg	bx, ax	; Restore AX
+%endif
 	; Are we reading or writing?
 	test	al, 16	; Bit 4 is cleared on all the read commands but set on 3 of the 4 write commands
 	mov		ah, [bp+IDEPACK.bSectorCount]
@@ -123,6 +131,12 @@ CheckErrorsAfterTransferringLastBlock:
 
 	; All sectors successfully transferred
 	add		cx, [bp+PIOVARS.bSectorsDone]		; Never sets CF
+%ifdef USE_PS2
+	; Turn off the software controlled HDD LED on IBM PS/2 machines
+	in		al, 92h	; Read System Control Port A
+	and		al, 3Fh	; Clear bits 7 and 6 to turn off LED
+	out		92h, al	; Write it back
+%endif
 	ret
 
 	; Return number of successfully read sectors
@@ -132,6 +146,13 @@ ReturnWithTransferErrorInAH:
 %else
 	mov		cl, [bp+PIOVARS.bSectorsDone]
 	mov		ch, 0								; Preserve CF
+%endif
+%ifdef USE_PS2
+	; Turn off the software controlled HDD LED on IBM PS/2 machines
+	in		al, 92h	; Read System Control Port A
+	and		al, 3Fh	; Clear bits 7 and 6 to turn off LED (Clears CF)
+	out		92h, al	; Write it back
+	stc				; Restore the CF
 %endif
 	ret
 

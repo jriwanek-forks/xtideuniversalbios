@@ -4,7 +4,7 @@
 
 ;
 ; XTIDE Universal BIOS and Associated Tools
-; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2013 by XTIDE Universal BIOS Team.
+; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2023 by XTIDE Universal BIOS Team.
 ;
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -132,21 +132,27 @@ FIRST_XTCF_DEVICE						EQU	DEVICE_8BIT_XTCF_PIO8
 LAST_XTCF_DEVICE						EQU	DEVICE_8BIT_XTCF_DMA
 XTCF_DEVICE_OFFSET						EQU	FIRST_XTCF_DEVICE						; Used for XT-CF device <--> mode conversion
 
+; Segment when RAMVARS is stored to top of interrupt vectors.
+LITE_MODE_RAMVARS_SEGMENT				EQU	30h
 
 ; ROM Variables. Written to the ROM image before flashing.
+; The ROMVARS version in Version.inc must be incremented whenever this struc changes.
 struc ROMVARS
 	.wRomSign			resb	2	; ROM Signature (AA55h)
 	.bRomSize			resb	1	; ROM size in 512 byte blocks
 	.rgbJump			resb	3	; First instruction to ROM init (jmp)
 
 	.rgbSign			resb	6	; Signature for XTIDE Configurator Program (must be even length)
-	.szTitle			resb	31	; BIOS title string
-	.szVersion			resb	19	; BIOS version string (supports up to r9999)
+	.szTitle			resb	32	; BIOS title string
+	.szVersion			resb	18	; BIOS version string (supports up to r999)
 
+	.pColorTheme		resb	2	; Ptr to the color attribute struc used by the boot menu and hotkey bar
 	.wFlags				resb	2	; Word for ROM flags
+	; Note! Any additional ROMVARS must be added below if they are supposed to be copied
+	; over when doing "Load old settings from EEPROM" to a new BIOS loaded from file.
+	.wRamVars			resb	2	; Segment address for RamVars
 	.wDisplayMode		resb	2	; Display mode for boot menu
 	.wBootTimeout		resb	2	; Boot Menu selection timeout in system timer ticks
-	.pColorTheme		resb	2	; Ptr to the color attribute struc used by the boot menu and hotkey bar
 	.bIdeCnt			resb	1	; Number of available IDE controllers
 	.bBootDrv			resb	1	; Default drive to boot from
 	.bMinFddCnt			resb	1	; Minimum number of Floppy Drives

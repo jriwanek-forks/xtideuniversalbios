@@ -3,7 +3,7 @@
 
 ;
 ; XTIDE Universal BIOS and Associated Tools
-; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2013 by XTIDE Universal BIOS Team.
+; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2023 by XTIDE Universal BIOS Team.
 ;
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -18,6 +18,9 @@
 ;
 
 ; Flash signature revisions:
+; XUB210	Moved pColorTheme so it's not copied when loading old settings from EEPROM.
+;			Added wRamVars to allow use of UMBs for storing variables in Full operating mode.
+;			Increased the length of szTitle and decreased the length of szVersion for USE_PS2
 ; XUB209	Shortened the BIOS version string (ROMVARS.szVersion) and WORD aligned the IDEVARS structures
 ; XUB208	Added option to skip slave drive detection
 ; XTIDE207	Added device type DEVICE_8BIT_XTIDE_REV2_OLIVETTI
@@ -31,7 +34,9 @@
 
 
 %define TITLE_STRING_START		"-=XTIDE Universal BIOS "
-%ifdef USE_AT
+%ifdef USE_PS2
+	%define TITLE_STRING_END	"(PS/2)=-"
+%elifdef USE_AT
 	%ifdef USE_386
 		%define TITLE_STRING_END	"(386)=-"
 	%else
@@ -50,7 +55,7 @@
 ; This is likely due to the "unusual" way it is defined above. Make sure to not have any additional strings
 ; on the same line, either before or after. In fact, do not even put a preceding label on the same line!
 %define BUILD_DATE_STRING		"(",__DATE__,")"
-%define FLASH_SIGNATURE			"XUB209"	; Do not terminate with NULL
+%define FLASH_SIGNATURE			"XUB210"	; Also known as the ROMVARS version. Do not terminate with NULL.
 
 
 %endif ; VERSION_INC

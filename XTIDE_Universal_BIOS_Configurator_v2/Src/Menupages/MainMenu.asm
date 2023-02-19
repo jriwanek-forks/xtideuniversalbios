@@ -3,7 +3,7 @@
 
 ;
 ; XTIDE Universal BIOS and Associated Tools
-; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2013 by XTIDE Universal BIOS Team.
+; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2023 by XTIDE Universal BIOS Team.
 ;
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -291,6 +291,28 @@ LoadOldSettingsFromEeprom:
 	call	Buffers_GetFileBufferToESDI
 	add		di, ROMVARS.pColorTheme
 	call	WriteColorTheme
+	; We did not copy over wFlags but we did copy over wRamVars so we
+	; must ensure that the Full Operating Mode setting matches wRamVars.
+	cmp		WORD [es:ROMVARS.wRamVars], LITE_MODE_RAMVARS_SEGMENT
+	jne		SHORT .SetFullOperatingMode		; All builds supports FOM
+	call	Buffers_IsXTbuildLoaded
+	jz		SHORT .ClearFullOperatingMode
+	; The loaded file is an AT build and we just copied the settings from
+	; an XT build in ROM configured for Lite mode. Resolve the conflict
+	; by clearing wRamVars thereby setting it to the default for FOM.
+	mov		WORD [es:ROMVARS.wRamVars], 0
+	; Tell the user there was a change in the configuration
+	mov		dx, g_szDlgFomEnabled
+	call	Dialogs_DisplayNotificationFromCSDX
+	; We don't need to set the FOM flag but fall through anyway
+.SetFullOperatingMode:
+	or		BYTE [es:ROMVARS.wFlags], FLG_ROMVARS_FULLMODE
+	jmp		SHORT .Done
+
+.ClearFullOperatingMode:
+	and		BYTE [es:ROMVARS.wFlags], ~FLG_ROMVARS_FULLMODE
+
+.Done:
 .FileNotLoaded:
 	jmp		MainMenu_EnterMenuOrModifyItemVisibility
 

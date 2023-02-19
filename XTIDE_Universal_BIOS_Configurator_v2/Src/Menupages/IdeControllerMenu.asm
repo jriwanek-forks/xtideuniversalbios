@@ -3,7 +3,7 @@
 
 ;
 ; XTIDE Universal BIOS and Associated Tools
-; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2013 by XTIDE Universal BIOS Team.
+; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2023 by XTIDE Universal BIOS Team.
 ;
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -228,7 +228,7 @@ g_rgbChoiceToValueLookupForCOM:
 	dw	'A'
 	dw	'B'
 	dw	'C'
-	dw	'x'				; must be last entry (see reader/write routines)
+	dw	'x'				; must be last entry (see reader/writer routines)
 g_rgszChoiceToStringLookupForCOM:
 	dw	g_szValueCfgCOM1
 	dw	g_szValueCfgCOM2

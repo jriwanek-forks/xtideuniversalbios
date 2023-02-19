@@ -3,7 +3,7 @@
 
 ;
 ; XTIDE Universal BIOS and Associated Tools
-; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2013 by XTIDE Universal BIOS Team.
+; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2023 by XTIDE Universal BIOS Team.
 ;
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -184,8 +184,7 @@ g_rgszValueToStringLookupForColorTheme:
 	dw	g_szValueColorTheme5
 
 ColorThemeTable:
-; Note! If there's ever a need to remove a theme or change a theme or reorder the themes then the ROMVARS version must be incremented.
-; This is for backwards compatibility. Adding new themes (at the bottom) however should work with no change to the ROMVARS version.
+; Note! If there's ever a need to add, remove or change a theme or reorder the themes then the ROMVARS version must be incremented.
 	; Classic (default)
 	db	COLOR_ATTRIBUTE(COLOR_YELLOW, COLOR_BLUE)							; .cBordersAndBackground
 	db	COLOR_ATTRIBUTE(COLOR_GRAY, COLOR_BLACK)							; .cShadow
@@ -395,7 +394,7 @@ ReadColorTheme:
 	pop		cx
 	loopne	.NextTheme
 	cld
-	mov		ax, cx
+	mov		ax, cx						; Return the color theme index in AX; zero (default theme) if a theme was not found
 	jne		SHORT .SkipCopy
 
 	; Copy the color theme fron the loaded BIOS overwriting XTIDECFG's own theme

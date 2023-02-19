@@ -3,7 +3,7 @@
 
 ;
 ; XTIDE Universal BIOS and Associated Tools
-; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2013 by XTIDE Universal BIOS Team.
+; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2023 by XTIDE Universal BIOS Team.
 ;
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -16,6 +16,12 @@
 ; GNU General Public License for more details.
 ; Visit http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 ;
+
+%ifdef USE_PS2
+	%ifndef USE_AT
+		%define USE_AT
+	%endif
+%endif
 
 ; Allow RELOCATE_INT13H_STACK only for AT builds
 %ifndef USE_AT

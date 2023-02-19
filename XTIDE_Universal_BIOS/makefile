@@ -43,6 +43,7 @@
 # USE_286                     Use instructions supported by 286 and later (defines USE_UNDOC_INTEL)#
 # USE_386                     Use instructions supported by 386 and later (defines USE_286)        #
 # USE_AT                      Use features supported on AT and later systems (not available on XT) #
+# USE_PS2                     For use with IBM PS/2 machines only (defines USE_AT)                 #
 # USE_UNDOC_INTEL             Optimizations for Intel CPUs - do NOT use on NEC V20/V30/Sony CPUs   #
 # USE_NEC_V                   Optimizations for use with NEC V20/V30 CPUs only                     #
 # CLD_NEEDED                  Only needed for compatibility with buggy software/BIOSes             #
@@ -117,11 +118,13 @@ DEFINES_XT = $(DEFINES_COMMON) ELIMINATE_CGA_SNOW MODULE_8BIT_IDE_ADVANCED
 DEFINES_XTPLUS = $(DEFINES_XT) USE_186
 DEFINES_AT = $(DEFINES_COMMON) USE_AT USE_286 MODULE_IRQ MODULE_COMPATIBLE_TABLES
 DEFINES_386 = $(DEFINES_AT) USE_386 MODULE_ADVANCED_ATA MODULE_WIN9X_CMOS_HACK
+DEFINES_PS2 = USE_PS2 USE_286 MODULE_STRINGS_COMPRESSED MODULE_HOTKEYS MODULE_BOOT_MENU MODULE_EBIOS MODULE_SERIAL MODULE_SERIAL_FLOPPY MODULE_IRQ MODULE_POWER_MANAGEMENT NO_ATAID_VALIDATION CLD_NEEDED
 
 DEFINES_XT_LARGE = $(DEFINES_XT) $(DEFINES_COMMON_LARGE)
 DEFINES_XTPLUS_LARGE = $(DEFINES_XTPLUS) $(DEFINES_COMMON_LARGE)
 DEFINES_AT_LARGE = $(DEFINES_AT) $(DEFINES_COMMON_LARGE)
 DEFINES_386_LARGE = $(DEFINES_386) $(DEFINES_COMMON_LARGE)
+DEFINES_PS2_LARGE = $(DEFINES_PS2) MODULE_COMPATIBLE_TABLES
 
 DEFINES_XT_TINY = MODULE_STRINGS_COMPRESSED MODULE_8BIT_IDE NO_ATAID_VALIDATION NO_ATAID_CORRECTION CLD_NEEDED
 
@@ -143,12 +146,14 @@ BIOS_SIZE_CUSTOM = ?
 DEFS_XT = $(DEFINES_XT:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_SMALL)
 DEFS_XTPLUS = $(DEFINES_XTPLUS:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_SMALL)
 DEFS_AT = $(DEFINES_AT:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_SMALL)
+DEFS_386 = $(DEFINES_386:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_SMALL)
+DEFS_PS2 = $(DEFINES_PS2:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_SMALL)
 DEFS_XT_LARGE = $(DEFINES_XT_LARGE:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_LARGE)
 DEFS_XTPLUS_LARGE = $(DEFINES_XTPLUS_LARGE:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_LARGE)
 DEFS_AT_LARGE = $(DEFINES_AT_LARGE:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_LARGE)
-DEFS_XT_TINY = $(DEFINES_XT_TINY:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_TINY)
-DEFS_386 = $(DEFINES_386:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_SMALL)
 DEFS_386_LARGE = $(DEFINES_386_LARGE:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_LARGE)
+DEFS_PS2_LARGE = $(DEFINES_PS2_LARGE:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_LARGE)
+DEFS_XT_TINY = $(DEFINES_XT_TINY:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_TINY)
 DEFS_CUSTOM = $(DEFINES_CUSTOM:%=-D%) -DBIOS_SIZE=$(BIOS_SIZE_CUSTOM)
 
 # Add -I in front of all header directories
@@ -190,11 +195,27 @@ ASFLAGS += -Ox					# Optimize operands to their shortest forms
 all: clean small large
 	@echo All done!
 
-small: xt_tiny xt xtplus at 386
+small: xt_tiny xt xtplus at 386 ps2
 	@echo All small binaries built!
 
-large: xt_large xtplus_large at_large 386_large
+large: xt_large xtplus_large at_large 386_large ps2_large
 	@echo All large binaries built!
+
+ps2:
+	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_PS2) -l"$(TARGET)_ps2.lst" -o"$(TARGET)_ps2.bin"
+	@echo * Small PS/2 version "$(TARGET)_ps2.bin" built.
+
+ps2_large:
+	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_PS2_LARGE) -l"$(TARGET)_ps2l.lst" -o"$(TARGET)_ps2l.bin"
+	@echo * Large PS/2 version "$(TARGET)_ps2l.bin" built.
+
+386:
+	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_386) -l"$(TARGET)_386.lst" -o"$(TARGET)_386.bin"
+	@echo * Small 386 version "$(TARGET)_386.bin" built.
+
+386_large:
+	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_386_LARGE) -l"$(TARGET)_386l.lst" -o"$(TARGET)_386l.bin"
+	@echo * Large 386 version "$(TARGET)_386l.bin" built.
 
 at:
 	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_AT) -l"$(TARGET)_at.lst" -o"$(TARGET)_at.bin"
@@ -224,14 +245,6 @@ xt_tiny:
 	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_XT_TINY) -l"$(TARGET)_tiny.lst" -o"$(TARGET)_tiny.bin"
 	@echo * Tiny XT version "$(TARGET)_tiny.bin" built.
 
-386:
-	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_386) -l"$(TARGET)_386.lst" -o"$(TARGET)_386.bin"
-	@echo * Small 386 version "$(TARGET)_386.bin" built.
-
-386_large:
-	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_386_LARGE) -l"$(TARGET)_386l.lst" -o"$(TARGET)_386l.bin"
-	@echo * Large 386 version "$(TARGET)_386l.bin" built.
-
 custom:
 	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_CUSTOM) -l"$(TARGET)_cstm.lst" -o"$(TARGET)_cstm.bin"
 	@echo * Custom version "$(TARGET)_cstm.bin" built.
@@ -250,11 +263,13 @@ checksum: all
 	@perl ..\Tools\checksum.pl $(TARGET)_xt.bin $(BIOS_SIZE_SMALL)
 	@perl ..\Tools\checksum.pl $(TARGET)_xtp.bin $(BIOS_SIZE_SMALL)
 	@perl ..\Tools\checksum.pl $(TARGET)_at.bin $(BIOS_SIZE_SMALL)
+	@perl ..\Tools\checksum.pl $(TARGET)_386.bin $(BIOS_SIZE_SMALL)
+	@perl ..\Tools\checksum.pl $(TARGET)_ps2.bin $(BIOS_SIZE_SMALL)
 	@perl ..\Tools\checksum.pl $(TARGET)_xtl.bin $(BIOS_SIZE_LARGE)
 	@perl ..\Tools\checksum.pl $(TARGET)_xtpl.bin $(BIOS_SIZE_LARGE)
 	@perl ..\Tools\checksum.pl $(TARGET)_atl.bin $(BIOS_SIZE_LARGE)
-	@perl ..\Tools\checksum.pl $(TARGET)_386.bin $(BIOS_SIZE_SMALL)
 	@perl ..\Tools\checksum.pl $(TARGET)_386l.bin $(BIOS_SIZE_LARGE)
+	@perl ..\Tools\checksum.pl $(TARGET)_ps2l.bin $(BIOS_SIZE_LARGE)
 
 unused:
 	@echo "XT Tiny"
@@ -293,4 +308,12 @@ unused:
 	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_386_LARGE) -o"$(TARGET)_unused_386l.asm" -l"$(TARGET)_unused_386l.lst"
 	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_386_LARGE) -o"$(TARGET)_unused_386l.asm" -E -DCHECK_FOR_UNUSED_ENTRYPOINTS
 	@perl ..\Tools\unused.pl $(TARGET)_unused_386l.lst $(TARGET)_unused_386l.asm
+	@echo "PS/2 Small"
+	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_PS2) -o"$(TARGET)_unused_ps2.asm" -l"$(TARGET)_unused_ps2.lst"
+	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_PS2) -o"$(TARGET)_unused_ps2.asm" -E -DCHECK_FOR_UNUSED_ENTRYPOINTS
+	@perl ..\Tools\unused.pl $(TARGET)_unused_ps2.lst $(TARGET)_unused_ps2.asm
+	@echo "PS/2 Large"
+	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_PS2_LARGE) -o"$(TARGET)_unused_ps2l.asm" -l"$(TARGET)_unused_ps2l.lst"
+	@$(AS) "$(SRC_ASM)" $(ASFLAGS) $(DEFS_PS2_LARGE) -o"$(TARGET)_unused_ps2l.asm" -E -DCHECK_FOR_UNUSED_ENTRYPOINTS
+	@perl ..\Tools\unused.pl $(TARGET)_unused_ps2l.lst $(TARGET)_unused_ps2l.asm
 

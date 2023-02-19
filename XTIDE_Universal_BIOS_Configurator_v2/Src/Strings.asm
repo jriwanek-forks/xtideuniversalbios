@@ -3,7 +3,7 @@
 
 ;
 ; XTIDE Universal BIOS and Associated Tools
-; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2013 by XTIDE Universal BIOS Team.
+; Copyright (C) 2009-2010 by Tomi Tilli, 2011-2023 by XTIDE Universal BIOS Team.
 ;
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -97,12 +97,12 @@ g_szNfoMainLoadStngs:	db	"Load old XTIDE Universal BIOS settings from EEPROM.",N
 g_szNfoMainConfigure:	db	"Configure XTIDE Universal BIOS settings.",NULL
 g_szNfoMainFlash:		db	"Flash loaded BIOS image to EEPROM.",NULL
 g_szNfoMainSave:		db	"Save BIOS changes back to original file from which it was loaded.",NULL
-g_szNfoMainLicense:		db	"XTIDE Universal BIOS and XTIDECFG Copyright (C) 2009-2010 by Tomi Tilli, 2011-2022 by XTIDE Universal BIOS Team."
+g_szNfoMainLicense:		db	"XTIDE Universal BIOS and XTIDECFG Copyright (C) 2009-2010 by Tomi Tilli, 2011-2023 by XTIDE Universal BIOS Team."
 						db	" Released under GNU GPL v2, with ABSOLUTELY NO WARRANTY. Press ENTER for more details...",NULL
 g_szNfoMainHomePage:	db	"Visit http://xtideuniversalbios.org (home page) and http://forum.vcfed.org (support)",NULL
 
 g_szHelpMainLicense:	db	"XTIDE Universal BIOS and XTIDECFG Configuration program are Copyright 2009-2010 by Tomi Tilli,"
-						db	" 2011-2022 by XTIDE Universal BIOS Team. Released under GNU GPL v2. This software comes with ABSOLUTELY NO WARRANTY."
+						db	" 2011-2023 by XTIDE Universal BIOS Team. Released under GNU GPL v2. This software comes with ABSOLUTELY NO WARRANTY."
 						db	" This is free software, and you are welcome to redistribute it under certain conditions."
 						db	" See the LICENSE.TXT file that was included with this distribution,"
 						db	" visit http://www.gnu.org/licenses/ gpl-2.0.html, or visit http://xtideuniversalbios.org.",NULL
@@ -116,6 +116,7 @@ g_szItemCfgIde4:		db	"Quaternary IDE Controller",NULL
 g_szItemCfgBootMenu:	db	"Boot settings",NULL
 g_szItemAutoConfigure:	db	"Auto Configure",NULL
 g_szItemCfgFullMode:	db	"Full operating mode",NULL
+g_szItemCfgRamVars:		db	"Use UMB for variables",NULL
 g_szItemCfgStealSize:	db	"kiB to steal from RAM",NULL
 g_szItemCfgIdeCnt:		db	"IDE controllers",NULL
 g_szItemCfgIdleTimeout:	db	"Power Management",NULL
@@ -127,7 +128,9 @@ g_szDlgBadBiosFound:	db	"This computer has been identified as being one of the f
 						db	"Zenith Data Systems Z-171",LF
 						db	"Zenith Data Systems Z-161",LF,LF
 						db	"The Boot settings menu option 'Remove other hard drives' has been set to YES for this reason.",NULL
+g_szDlgFomEnabled		db	"The loaded file does not support Lite mode - Full operating mode has been enabled.",NULL
 g_szDlgCfgFullMode:		db	"Enable full operating mode?",NULL
+g_szDlgCfgRamVars:		db	"Store variables in UMB?",NULL
 g_szDlgCfgStealSize:	db	"How many kiB of base memory to steal for XTIDE Universal BIOS variables (1...255)?",NULL
 g_szDlgCfgIdeCnt:		db	"How many IDE controllers to manage (1...4)?",NULL
 g_szDlgCfgIdleTimeout:	db	"Select the amount of time before idling drives should enter standby mode.",NULL
@@ -135,7 +138,8 @@ g_szDlgCfgIdleTimeout:	db	"Select the amount of time before idling drives should
 g_szNfoCfgIde:			db	"IDE controller and drive configuration.",NULL
 g_szNfoCfgBootMenu:		db	"Boot configuration.",NULL
 g_szNfoAutoConfigure:	db	"Automatically Configure XTIDE Universal BIOS for this system.",NULL
-g_szNfoCfgFullMode:		db	"Full mode supports multiple controllers and has more features.",NULL
+g_szNfoCfgFullMode:		db	"Full mode supports up to four controllers and has more features.",NULL
+g_szNfoCfgRamVars:		db	"Enter UMB segment address (FFFF=Disable UMB usage and use the top of Conventional memory instead).",NULL
 g_szNfoCfgStealSize:	db	"How many kiB's to steal from Conventional memory for XTIDE Universal BIOS variables.",NULL
 g_szNfoCfgIdeCnt:		db	"Number of IDE controllers to manage.",NULL
 g_szNfoCfgIdleTimeout:	db	"Enable Power Management to set the harddrive(s) to spin down after idling a certain amount of time.",NULL
@@ -143,19 +147,31 @@ g_szNfoCfgIdleTimeout:	db	"Enable Power Management to set the harddrive(s) to sp
 g_szSerialMoved:		db	"A Serial Controller has been moved to the end of the Controller list."
 						db	" No further action is required. Serial Controllers must be placed at the end of the list.",NULL
 
-g_szHelpCfgFullMode:	db	"Full mode supports up to 4 IDE controllers (8 drives). Full mode reserves a bit of RAM from the top of"
-						db	" Conventional memory. This makes it possible to use ROM BASIC and other software that requires"
-						db	" the interrupt vectors where XTIDE Universal BIOS parameters would be stored in Lite mode.",LF,LF
+g_szHelpCfgFullMode:	db	"Full mode supports up to 4 IDE controllers (8 drives) and requires 1 kiB of RAM to store hard disk parameters and"
+						db	" other variables. This bit of RAM can be reserved from the top of Conventional memory, or, if RAM is available in"
+						db	" the Upper Memory Area (UMA), by configuring the BIOS to use an Upper Memory Block (UMB). Full mode makes it"
+						db	" possible to use ROM BASIC and other software that requires the memory range where"
+						db	" XTIDE Universal BIOS parameters would be stored in Lite mode.",LF,LF
 						db	"Lite mode supports only 2 IDE controllers (4 drives) and stores parameters to the top of the interrupt vectors"
-						db	" (30:0h) so no Conventional memory needs to be reserved. Lite mode cannot be used if some software requires"
-						db	" the top of interrupt vectors. Usually this is not a problem since only IBM ROM BASIC uses them.",LF,LF
+						db	" (30:0h) so no Conventional memory needs to be reserved. Lite mode cannot be used if you intend to use"
+						db	" IBM ROM BASIC or software such as Turbo BASIC or BASICA.",LF,LF
 						db	"Tandy 1000 models with 640 kiB or less memory need to use Lite mode since the top of Conventional memory gets"
 						db	" dynamically reserved by video hardware. This happens only with Tandy integrated video controller and not when"
-						db	" using expansion graphics cards. It is possible to use Full mode if reserving RAM for video memory + what is"
-						db	" required for XTIDE Universal BIOS. This would mean 65 kiB but most software should work with 33 kiB reserved.",NULL
+						db	" using expansion graphics cards. It is possible to use Full mode if configuring the BIOS to use an UMB or by"
+						db	" reserving RAM for video memory in addition to what is required for XTIDE Universal BIOS. Most software should"
+						db	" work with 33 kiB reserved but some will require 65 kiB. Theoretically speaking, a lot more could be required"
+						db	" - it is just that we are not aware of any software with higher video memory requirements.",NULL
 
-g_szHelpCfgStealSize:	db	"Parameters for detected hard disks must be stored somewhere. In Full mode they are stored at the top of Conventional"
-						db	" memory. 1 kiB is usually enough but you may have to reserve more if you want to use Full mode on a Tandy 1000.",NULL
+g_szHelpCfgRamVars:		db	"The UMB segment address entered here will be used to store hard disk parameters and other variables leaving all"
+						db	" of the Conventional memory free for other uses.",LF,LF
+						db	"Do not use this option unless you know for certain that memory actually exists at this address and that it is"
+						db	" writable without any prerequisite chipset programming. If you are using any sort of DOS memory manager or UMB"
+						db	" provider then it is probably a good idea to use whatever memory range exclusion option it provides to prevent it"
+						db	" from trying to use this memory range. Note that only 1 kiB of the UMB will be used.",NULL
+
+g_szHelpCfgStealSize:	db	"Parameters for detected hard disks and other variables must be stored somewhere. If in Full mode, and the BIOS has"
+						db	" not been configured to use an UMB, then they are stored at the top of Conventional memory."
+						db	" 1 kiB is usually enough but you may have to reserve more if you want to use Full mode on a Tandy 1000.",NULL
 
 g_szHelpCfgIdleTimeout:	db	"This option enables the standby timer for all harddrives handled by XTIDE Universal BIOS,"
 						db	" allowing the drives to spin down after idling the selected amount of time."
